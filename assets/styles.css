@@ -1,0 +1,307 @@
+/* Shared lesson stylesheet — AI Engineering curriculum */
+
+:root {
+  --bg: #0f0f13;
+  --surface: #17171f;
+  --surface-2: #1e1e2a;
+  --border: #2a2a3a;
+  --text: #e2e2e8;
+  --text-muted: #888899;
+  --accent: #7c6af7;
+  --accent-dim: #3d3480;
+  --green: #4ade80;
+  --yellow: #facc15;
+  --red: #f87171;
+  --blue: #60a5fa;
+  --code-bg: #12121a;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --radius: 8px;
+  --max-width: 780px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 17px; scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.7;
+  padding: 0 1rem 4rem;
+}
+
+/* Layout */
+.container { max-width: var(--max-width); margin: 0 auto; padding: 2rem 0; }
+
+/* Header */
+.lesson-header {
+  border-bottom: 1px solid var(--border);
+  padding: 2rem 0 1.5rem;
+  margin-bottom: 2.5rem;
+}
+.lesson-header .phase-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  background: var(--accent-dim);
+  padding: 0.2em 0.7em;
+  border-radius: 20px;
+  margin-bottom: 0.75rem;
+}
+.lesson-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.5rem;
+}
+.lesson-header .subtitle {
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+.lesson-meta {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.lesson-meta span { display: flex; align-items: center; gap: 0.3em; }
+
+/* Typography */
+h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 2.5rem 0 0.75rem;
+  color: var(--text);
+}
+h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 1.75rem 0 0.5rem;
+  color: var(--text);
+}
+p { margin-bottom: 1rem; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+strong { font-weight: 600; color: #fff; }
+em { color: var(--text-muted); font-style: italic; }
+
+ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+li { margin-bottom: 0.3rem; }
+
+/* Code */
+code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background: var(--code-bg);
+  color: #c4b5fd;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+  margin: 1.25rem 0;
+  position: relative;
+}
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.875rem;
+  color: var(--text);
+  line-height: 1.6;
+}
+.code-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.4rem;
+}
+
+/* Callouts */
+.callout {
+  border-left: 3px solid var(--accent);
+  background: var(--surface);
+  padding: 1rem 1.25rem;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin: 1.5rem 0;
+}
+.callout.warn  { border-color: var(--yellow); }
+.callout.tip   { border-color: var(--green); }
+.callout.info  { border-color: var(--blue); }
+.callout-title {
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.4rem;
+  color: var(--accent);
+}
+.callout.warn  .callout-title { color: var(--yellow); }
+.callout.tip   .callout-title { color: var(--green); }
+.callout.info  .callout-title { color: var(--blue); }
+
+/* Diagrams */
+.diagram {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.9rem;
+}
+th {
+  background: var(--surface-2);
+  padding: 0.6rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+tr:last-child td { border-bottom: none; }
+
+/* Quiz */
+.quiz {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin: 2rem 0;
+}
+.quiz h3 { margin-top: 0; color: var(--accent); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.quiz-question { margin-bottom: 1.25rem; }
+.quiz-question p { font-weight: 500; margin-bottom: 0.6rem; }
+.quiz-options { display: flex; flex-direction: column; gap: 0.4rem; }
+.quiz-option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  font-size: 0.9rem;
+}
+.quiz-option:hover { border-color: var(--accent); background: var(--surface-2); }
+.quiz-option.correct { border-color: var(--green); background: rgba(74,222,128,0.08); }
+.quiz-option.wrong   { border-color: var(--red);   background: rgba(248,113,113,0.08); }
+.quiz-option input[type="radio"] { accent-color: var(--accent); }
+.quiz-feedback { display: none; margin-top: 0.75rem; padding: 0.6rem 1rem; border-radius: var(--radius); font-size: 0.9rem; }
+.quiz-feedback.show { display: block; }
+.quiz-feedback.correct { background: rgba(74,222,128,0.1); color: var(--green); border: 1px solid var(--green); }
+.quiz-feedback.wrong   { background: rgba(248,113,113,0.1); color: var(--red); border: 1px solid var(--red); }
+.quiz-check-btn {
+  margin-top: 1rem;
+  padding: 0.55rem 1.25rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  transition: opacity 0.15s;
+}
+.quiz-check-btn:hover { opacity: 0.85; }
+
+/* Progress & navigation */
+.lesson-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.lesson-nav a {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  color: var(--text-muted);
+  transition: color 0.15s;
+}
+.lesson-nav a:hover { color: var(--accent); text-decoration: none; }
+
+/* Ask-teacher CTA */
+.ask-teacher {
+  background: linear-gradient(135deg, var(--accent-dim), #1a1040);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  margin: 2.5rem 0;
+  font-size: 0.9rem;
+}
+.ask-teacher strong { color: var(--accent); }
+
+/* Roadmap */
+.roadmap { margin: 1.5rem 0; }
+.roadmap-phase {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+}
+.roadmap-phase-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface-2);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.phase-num {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: 700;
+  flex-shrink: 0;
+}
+.phase-active   .phase-num { background: var(--accent);    color: #fff; }
+.phase-upcoming .phase-num { background: var(--surface);   color: var(--text-muted); border: 1px solid var(--border); }
+.phase-done     .phase-num { background: var(--green);     color: #000; }
+.roadmap-phase-body { padding: 0.5rem 1rem 0.75rem 1rem; font-size: 0.875rem; color: var(--text-muted); }
+.roadmap-phase-body ul { padding-left: 1.25rem; margin: 0.25rem 0 0; }
+.roadmap-phase-body li { margin-bottom: 0.15rem; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* Responsive */
+@media (max-width: 600px) {
+  html { font-size: 15px; }
+  .lesson-header h1 { font-size: 1.6rem; }
+}

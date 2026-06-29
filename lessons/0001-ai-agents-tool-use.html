@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Agents &amp; Tool Use — AI Engineering</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+  <style>
+    /* Diagram-specific styles */
+    .agent-diagram {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      padding: 1.5rem 1rem;
+    }
+    .diag-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      width: 100%;
+      justify-content: center;
+    }
+    .diag-box {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.55rem 1rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      white-space: nowrap;
+      text-align: center;
+    }
+    .diag-box.highlight { border-color: var(--accent); color: var(--accent); }
+    .diag-box.green     { border-color: var(--green);  color: var(--green);  }
+    .diag-box.yellow    { border-color: var(--yellow); color: var(--yellow); }
+    .diag-box.muted     { color: var(--text-muted); }
+    .diag-arrow-h {
+      width: 36px;
+      height: 2px;
+      background: var(--border);
+      position: relative;
+      flex-shrink: 0;
+    }
+    .diag-arrow-h::after {
+      content: '';
+      position: absolute;
+      right: -1px; top: -4px;
+      border: 5px solid transparent;
+      border-left-color: var(--border);
+    }
+    .diag-arrow-v {
+      width: 2px;
+      height: 24px;
+      background: var(--border);
+      position: relative;
+      flex-shrink: 0;
+      margin: 0 auto;
+    }
+    .diag-arrow-v::after {
+      content: '';
+      position: absolute;
+      bottom: -1px; left: -4px;
+      border: 5px solid transparent;
+      border-top-color: var(--border);
+    }
+    .diag-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin: 0.15rem 0;
+    }
+    .diag-branch {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .diag-fork-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 2.5rem;
+      position: relative;
+    }
+    .diag-fork-branch {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+    .diag-fork-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-bottom: 0.3rem;
+    }
+    /* Syntax highlight colors for Python */
+    .kw  { color: #c792ea; }
+    .fn  { color: #82aaff; }
+    .str { color: #c3e88d; }
+    .cmt { color: #546e7a; font-style: italic; }
+    .num { color: #f78c6c; }
+    .cls { color: #ffcb6b; }
+    .var { color: #eeffff; }
+    .op  { color: #89ddff; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header class="lesson-header">
+    <div class="phase-badge">Phase 1 · Lesson 1 of 5</div>
+    <h1>AI Agents &amp; Tool Use</h1>
+    <p class="subtitle">From text generation to real-world action — the agent loop explained.</p>
+    <div class="lesson-meta">
+      <span>⏱ 75 min</span>
+      <span>🛠 Hands-on Python</span>
+    </div>
+  </header>
+
+  <!-- Section 1 -->
+  <h2>The Problem with Static Prompts</h2>
+  <p>
+    Prompt engineering makes the model <em>think</em> better. Agents make it <em>do</em> things.
+    A model locked inside a context window can only generate text — it cannot check today's stock price,
+    query your database, or send an email. An agent changes that. By giving the model a set of tools
+    it can request, you turn a text generator into a system that can act on the world.
+    That is the leap from prompt engineering to AI engineering.
+  </p>
+
+  <div class="callout tip">
+    <div class="callout-title">What you already know</div>
+    You know how to call the API, craft system prompts, and use chain-of-thought.
+    This lesson builds directly on that — the only new idea is the loop.
+  </div>
+
+  <!-- Section 2: The Agent Loop Diagram -->
+  <h2>The Agent Loop</h2>
+  <p>Every AI agent — no matter how complex — runs this loop:</p>
+
+  <div class="diagram">
+    <div class="agent-diagram">
+
+      <!-- Row 1: User Input → LLM -->
+      <div class="diag-row">
+        <div class="diag-box muted">User Input</div>
+        <div class="diag-arrow-h"></div>
+        <div class="diag-box highlight">LLM</div>
+        <div class="diag-arrow-h"></div>
+        <div class="diag-box muted" style="font-size:0.75rem; padding: 0.5rem 0.75rem;">
+          Tool call?<br/>or done?
+        </div>
+      </div>
+
+      <!-- Fork -->
+      <div style="display:flex; align-items:flex-start; gap: 4rem; margin-top: 0.2rem;">
+
+        <!-- Left branch: tool call -->
+        <div class="diag-fork-branch">
+          <div class="diag-fork-label" style="color: var(--yellow);">tool_use</div>
+          <div class="diag-arrow-v" style="background: var(--yellow);"></div>
+          <div class="diag-box yellow">Execute Tool</div>
+          <div class="diag-arrow-v" style="background: var(--yellow);"></div>
+          <div class="diag-label">result sent back</div>
+          <div class="diag-arrow-v" style="background: var(--yellow);"></div>
+          <div class="diag-box yellow">Back to LLM ↺</div>
+        </div>
+
+        <!-- Right branch: done -->
+        <div class="diag-fork-branch">
+          <div class="diag-fork-label" style="color: var(--green);">end_turn</div>
+          <div class="diag-arrow-v" style="background: var(--green);"></div>
+          <div class="diag-box green">Final Answer</div>
+          <div class="diag-arrow-v" style="background: var(--green);"></div>
+          <div class="diag-box green">✓ Done</div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <p>
+    The loop keeps running as long as the model returns <code>stop_reason: "tool_use"</code>.
+    Once it returns <code>stop_reason: "end_turn"</code>, your loop exits and you return the answer.
+    That's the entire agent pattern — nothing more.
+  </p>
+
+  <!-- Section 3: Real Code -->
+  <h2>Tool Calling in Python — Real Code</h2>
+  <p>
+    Here is a complete, runnable agent. It has three tools, runs the loop, and prints exactly
+    which tool was called at each step. Paste it into your project and run it.
+  </p>
+
+  <div class="code-label">agent.py — complete runnable example</div>
+  <pre><code><span class="kw">import</span> <span class="var">anthropic</span>
+<span class="kw">import</span> <span class="var">json</span>
+
+<span class="var">client</span> <span class="op">=</span> <span class="var">anthropic</span>.<span class="cls">Anthropic</span>()
+
+<span class="cmt"># ── Tool implementations ───────────────────────────────────────────</span>
+
+<span class="kw">def</span> <span class="fn">get_current_weather</span>(<span class="var">city</span>: <span class="cls">str</span>) <span class="op">-></span> <span class="cls">str</span>:
+    <span class="cmt"># Real impl: call a weather API here</span>
+    <span class="kw">return</span> <span class="var">json</span>.<span class="fn">dumps</span>({<span class="str">"city"</span>: <span class="var">city</span>, <span class="str">"temp_c"</span>: <span class="num">18</span>, <span class="str">"condition"</span>: <span class="str">"Partly cloudy"</span>})
+
+<span class="kw">def</span> <span class="fn">calculate</span>(<span class="var">expression</span>: <span class="cls">str</span>) <span class="op">-></span> <span class="cls">str</span>:
+    <span class="kw">try</span>:
+        <span class="var">result</span> <span class="op">=</span> <span class="fn">eval</span>(<span class="var">expression</span>, {<span class="str">"__builtins__"</span>: {}}, {})  <span class="cmt"># safe for numeric expressions</span>
+        <span class="kw">return</span> <span class="cls">str</span>(<span class="var">result</span>)
+    <span class="kw">except</span> <span class="cls">Exception</span> <span class="kw">as</span> <span class="var">e</span>:
+        <span class="kw">return</span> <span class="var">f</span><span class="str">"Error: {e}"</span>
+
+<span class="kw">def</span> <span class="fn">search_web</span>(<span class="var">query</span>: <span class="cls">str</span>) <span class="op">-></span> <span class="cls">str</span>:
+    <span class="cmt"># Real impl: call Serper, Tavily, or Brave Search API here</span>
+    <span class="kw">return</span> <span class="var">json</span>.<span class="fn">dumps</span>([
+        {<span class="str">"title"</span>: <span class="var">f</span><span class="str">"Search result for '{query}'"</span>, <span class="str">"snippet"</span>: <span class="str">"Stub result — wire up a real search API."</span>}
+    ])
+
+<span class="cmt"># ── Tool registry (maps name → function) ──────────────────────────</span>
+
+<span class="cls">TOOL_MAP</span> = {
+    <span class="str">"get_current_weather"</span>: <span class="var">get_current_weather</span>,
+    <span class="str">"calculate"</span>:           <span class="var">calculate</span>,
+    <span class="str">"search_web"</span>:          <span class="var">search_web</span>,
+}
+
+<span class="cmt"># ── Tool definitions (what the model sees) ─────────────────────────</span>
+<span class="cmt"># These descriptions ARE prompts — write them carefully.</span>
+
+<span class="cls">TOOLS</span> = [
+    {
+        <span class="str">"name"</span>: <span class="str">"get_current_weather"</span>,
+        <span class="str">"description"</span>: <span class="str">"Get the current weather for a city. Use when the user asks about weather conditions."</span>,
+        <span class="str">"input_schema"</span>: {
+            <span class="str">"type"</span>: <span class="str">"object"</span>,
+            <span class="str">"properties"</span>: {
+                <span class="str">"city"</span>: {<span class="str">"type"</span>: <span class="str">"string"</span>, <span class="str">"description"</span>: <span class="str">"City name, e.g. 'London'"</span>}
+            },
+            <span class="str">"required"</span>: [<span class="str">"city"</span>]
+        }
+    },
+    {
+        <span class="str">"name"</span>: <span class="str">"calculate"</span>,
+        <span class="str">"description"</span>: <span class="str">"Evaluate a mathematical expression. Use for arithmetic, percentages, or any calculation."</span>,
+        <span class="str">"input_schema"</span>: {
+            <span class="str">"type"</span>: <span class="str">"object"</span>,
+            <span class="str">"properties"</span>: {
+                <span class="str">"expression"</span>: {<span class="str">"type"</span>: <span class="str">"string"</span>, <span class="str">"description"</span>: <span class="str">"Python numeric expression, e.g. '1000 / 182.5'"</span>}
+            },
+            <span class="str">"required"</span>: [<span class="str">"expression"</span>]
+        }
+    },
+    {
+        <span class="str">"name"</span>: <span class="str">"search_web"</span>,
+        <span class="str">"description"</span>: <span class="str">"Search the web for recent information. Use when the user asks about current events or facts you may not have."</span>,
+        <span class="str">"input_schema"</span>: {
+            <span class="str">"type"</span>: <span class="str">"object"</span>,
+            <span class="str">"properties"</span>: {
+                <span class="str">"query"</span>: {<span class="str">"type"</span>: <span class="str">"string"</span>, <span class="str">"description"</span>: <span class="str">"Search query"</span>}
+            },
+            <span class="str">"required"</span>: [<span class="str">"query"</span>]
+        }
+    },
+]
+
+<span class="cmt"># ── The agent loop ─────────────────────────────────────────────────</span>
+
+<span class="kw">def</span> <span class="fn">run_agent</span>(<span class="var">user_message</span>: <span class="cls">str</span>) <span class="op">-></span> <span class="cls">str</span>:
+    <span class="var">messages</span> <span class="op">=</span> [{<span class="str">"role"</span>: <span class="str">"user"</span>, <span class="str">"content"</span>: <span class="var">user_message</span>}]
+
+    <span class="kw">while</span> <span class="cls">True</span>:
+        <span class="var">response</span> <span class="op">=</span> <span class="var">client</span>.<span class="var">messages</span>.<span class="fn">create</span>(
+            <span class="var">model</span><span class="op">=</span><span class="str">"claude-sonnet-4-6"</span>,
+            <span class="var">max_tokens</span><span class="op">=</span><span class="num">1024</span>,
+            <span class="var">tools</span><span class="op">=</span><span class="cls">TOOLS</span>,
+            <span class="var">messages</span><span class="op">=</span><span class="var">messages</span>,
+        )
+
+        <span class="kw">if</span> <span class="var">response</span>.<span class="var">stop_reason</span> <span class="op">==</span> <span class="str">"end_turn"</span>:
+            <span class="kw">return</span> <span class="var">response</span>.<span class="var">content</span>[<span class="num">0</span>].<span class="var">text</span>
+
+        <span class="cmt"># stop_reason == "tool_use" — execute each requested tool</span>
+        <span class="var">tool_results</span> <span class="op">=</span> []
+        <span class="kw">for</span> <span class="var">block</span> <span class="kw">in</span> <span class="var">response</span>.<span class="var">content</span>:
+            <span class="kw">if</span> <span class="var">block</span>.<span class="var">type</span> <span class="op">!=</span> <span class="str">"tool_use"</span>:
+                <span class="kw">continue</span>
+
+            <span class="fn">print</span>(<span class="var">f</span><span class="str">"→ Calling {block.name}({block.input})"</span>)
+            <span class="var">result</span> <span class="op">=</span> <span class="cls">TOOL_MAP</span>[<span class="var">block</span>.<span class="var">name</span>](<span class="op">**</span><span class="var">block</span>.<span class="var">input</span>)
+            <span class="fn">print</span>(<span class="var">f</span><span class="str">"← Result: {result}\n"</span>)
+
+            <span class="var">tool_results</span>.<span class="fn">append</span>({
+                <span class="str">"type"</span>: <span class="str">"tool_result"</span>,
+                <span class="str">"tool_use_id"</span>: <span class="var">block</span>.<span class="var">id</span>,
+                <span class="str">"content"</span>: <span class="var">result</span>,
+            })
+
+        <span class="cmt"># Append both the assistant turn and the tool results to history</span>
+        <span class="var">messages</span>.<span class="fn">append</span>({<span class="str">"role"</span>: <span class="str">"assistant"</span>, <span class="str">"content"</span>: <span class="var">response</span>.<span class="var">content</span>})
+        <span class="var">messages</span>.<span class="fn">append</span>({<span class="str">"role"</span>: <span class="str">"user"</span>,      <span class="str">"content"</span>: <span class="var">tool_results</span>})
+
+
+<span class="kw">if</span> <span class="var">__name__</span> <span class="op">==</span> <span class="str">"__main__"</span>:
+    <span class="var">answer</span> <span class="op">=</span> <span class="fn">run_agent</span>(<span class="str">"What's the weather in Tokyo, and how many degrees warmer is that than 10°C?"</span>)
+    <span class="fn">print</span>(<span class="str">"Final answer:"</span>, <span class="var">answer</span>)
+</code></pre>
+
+  <div class="callout info">
+    <div class="callout-title">Run it now</div>
+    Save as <code>agent.py</code> in your project, make sure <code>ANTHROPIC_API_KEY</code> is set, and run <code>python agent.py</code>.
+    You will see it call <code>get_current_weather</code> and then <code>calculate</code> before answering.
+  </div>
+
+  <!-- Section A: Parallel Tool Calls -->
+  <h2>Parallel Tool Calls</h2>
+  <p>
+    In the basic agent loop, the model calls one tool per turn. But when the user asks a question
+    that requires two independent pieces of data, a smart model batches both requests into a single
+    response. Instead of returning one <code>tool_use</code> block, it returns two — and your loop
+    collects all of them before making a single round-trip back to the model.
+  </p>
+  <p>
+    Both Claude and GPT-4 support this natively. The model decides when calls are independent enough
+    to parallelize. Your job is to make sure your handler already iterates over
+    <code>response.content</code> and collects <em>all</em> <code>tool_use</code> blocks before
+    sending results back — which the code in Section 3 already does correctly. That loop over blocks
+    was not accidental.
+  </p>
+  <p>
+    The practical impact is real: when two tools have no data dependency on each other (the result of
+    tool A is not needed to call tool B), parallelizing them halves the round-trip latency for that
+    turn.
+  </p>
+
+  <div class="callout warn">
+    <div class="callout-title">Production Impact</div>
+    Parallel tool calls cut latency by 40–60% for turns where tools are independent. On a typical
+    research agent that fetches three external sources per query, that is the difference between
+    a 4-second response and a 2-second response.
+  </div>
+
+  <p>Try this query against the agent from Section 3:</p>
+
+  <div class="code-label">parallel_demo.py — both weather calls happen in one turn</div>
+  <pre><code><span class="cmt"># Ask a question that requires two independent tool calls</span>
+<span class="var">answer</span> <span class="op">=</span> <span class="fn">run_agent</span>(
+    <span class="str">"What's the weather in Tokyo AND London right now, and which city is warmer?"</span>
+)
+<span class="fn">print</span>(<span class="var">answer</span>)
+
+<span class="cmt"># What you will see in the terminal:</span>
+<span class="cmt"># → Calling get_current_weather({'city': 'Tokyo'})</span>
+<span class="cmt"># → Calling get_current_weather({'city': 'London'})</span>
+<span class="cmt"># ← Result: {"city": "Tokyo",  "temp_c": 28, ...}</span>
+<span class="cmt"># ← Result: {"city": "London", "temp_c": 14, ...}</span>
+<span class="cmt"># Final answer: Tokyo is warmer at 28°C vs London's 14°C.</span>
+<span class="cmt">#</span>
+<span class="cmt"># Both calls happened in ONE loop iteration, not two.</span></code></pre>
+
+  <p>
+    Notice that the existing <code>for block in response.content</code> loop in Section 3 already
+    handles this: it collects <em>all</em> <code>tool_use</code> blocks into <code>tool_results</code>,
+    then sends them all back in a single <code>user</code> message. If your handler only processed
+    the first block and returned immediately, parallel calls would silently break.
+  </p>
+
+  <div class="callout info">
+    <div class="callout-title">Interview question</div>
+    "What is the difference between sequential and parallel tool calls in an agent?"<br/><br/>
+    Sequential: the model issues one tool call per loop turn — each result comes back before the next
+    call is decided. Parallel: the model returns multiple <code>tool_use</code> blocks in a single
+    response turn. You execute all of them and return all results before the next model call.
+    Parallel calls require no data dependency between the tools, and they halve round-trips for
+    that turn.
+  </div>
+
+  <!-- Section B: Production Hardening -->
+  <h2>Production Hardening</h2>
+  <p>
+    The agent in Section 3 works perfectly for learning. Before you ship it, four things are
+    missing. Each one has caused a production incident for someone.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Gap</th>
+        <th>What goes wrong without it</th>
+        <th>The fix</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Max iterations guard</strong></td>
+        <td>A hallucinating model or a broken tool result can send the agent into an infinite loop,
+            burning tokens and money until the process is killed</td>
+        <td>Raise an exception if <code>iterations &gt;= 10</code> (tune per use-case)</td>
+      </tr>
+      <tr>
+        <td><strong>Token budget check</strong></td>
+        <td>As the <code>messages[]</code> array grows, you eventually hit the model's context limit
+            and get a hard API error mid-conversation</td>
+        <td>Check <code>response.usage.input_tokens</code> each turn; warn or summarize before the limit</td>
+      </tr>
+      <tr>
+        <td><strong>Tool error handling</strong></td>
+        <td>An uncaught exception in a tool crashes the whole agent instead of letting the model
+            recover gracefully</td>
+        <td>Catch exceptions in your tool executor and return a <code>tool_result</code> with
+            <code>is_error: True</code></td>
+      </tr>
+      <tr>
+        <td><strong>Tool call logging</strong></td>
+        <td>When something goes wrong in production, you have no trace of which tools were called,
+            what arguments were used, or how long each took</td>
+        <td>Log tool name, input, output, and <code>latency_ms</code> before returning each result</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Here is a production-hardened version of the agent loop incorporating all four patterns:</p>
+
+  <div class="code-label">agent_production.py — hardened loop</div>
+  <pre><code><span class="kw">import</span> <span class="var">anthropic</span>, <span class="var">json</span>, <span class="var">time</span>, <span class="var">logging</span>
+
+<span class="var">logger</span> <span class="op">=</span> <span class="var">logging</span>.<span class="fn">getLogger</span>(<span class="str">"agent"</span>)
+<span class="var">client</span> <span class="op">=</span> <span class="var">anthropic</span>.<span class="cls">Anthropic</span>()
+
+<span class="cls">MAX_ITERATIONS</span> <span class="op">=</span> <span class="num">10</span>
+<span class="cls">TOKEN_BUDGET</span>   <span class="op">=</span> <span class="num">180_000</span>  <span class="cmt"># warn at 90% of claude-sonnet-4-6's 200k context</span>
+
+<span class="kw">class</span> <span class="cls">AgentLoopError</span>(<span class="cls">Exception</span>): <span class="kw">pass</span>
+
+<span class="kw">def</span> <span class="fn">execute_tool_safe</span>(<span class="var">block</span>) <span class="op">-></span> <span class="cls">dict</span>:
+    <span class="str">"""Execute a tool_use block. Returns a tool_result dict (with is_error on failure)."""</span>
+    <span class="var">t0</span> <span class="op">=</span> <span class="var">time</span>.<span class="fn">perf_counter</span>()
+    <span class="kw">try</span>:
+        <span class="var">result</span> <span class="op">=</span> <span class="cls">TOOL_MAP</span>[<span class="var">block</span>.<span class="var">name</span>](<span class="op">**</span><span class="var">block</span>.<span class="var">input</span>)
+        <span class="var">latency_ms</span> <span class="op">=</span> <span class="fn">int</span>((<span class="var">time</span>.<span class="fn">perf_counter</span>() <span class="op">-</span> <span class="var">t0</span>) <span class="op">*</span> <span class="num">1000</span>)
+        <span class="var">logger</span>.<span class="fn">info</span>(<span class="str">"tool=%s input=%s latency_ms=%d"</span>, <span class="var">block</span>.<span class="var">name</span>, <span class="var">block</span>.<span class="var">input</span>, <span class="var">latency_ms</span>)
+        <span class="kw">return</span> {
+            <span class="str">"type"</span>:        <span class="str">"tool_result"</span>,
+            <span class="str">"tool_use_id"</span>: <span class="var">block</span>.<span class="var">id</span>,
+            <span class="str">"content"</span>:     <span class="var">result</span>,
+        }
+    <span class="kw">except</span> <span class="cls">Exception</span> <span class="kw">as</span> <span class="var">e</span>:
+        <span class="var">error_msg</span> <span class="op">=</span> <span class="var">f</span><span class="str">"Tool '{block.name}' failed: {e}"</span>
+        <span class="var">logger</span>.<span class="fn">error</span>(<span class="var">error_msg</span>)
+        <span class="kw">return</span> {
+            <span class="str">"type"</span>:        <span class="str">"tool_result"</span>,
+            <span class="str">"tool_use_id"</span>: <span class="var">block</span>.<span class="var">id</span>,
+            <span class="str">"content"</span>:     <span class="var">error_msg</span>,
+            <span class="str">"is_error"</span>:    <span class="cls">True</span>,     <span class="cmt"># model sees this and adapts its strategy</span>
+        }
+
+<span class="kw">def</span> <span class="fn">run_agent_production</span>(<span class="var">user_message</span>: <span class="cls">str</span>) <span class="op">-></span> <span class="cls">str</span>:
+    <span class="var">messages</span>   <span class="op">=</span> [{<span class="str">"role"</span>: <span class="str">"user"</span>, <span class="str">"content"</span>: <span class="var">user_message</span>}]
+    <span class="var">iterations</span> <span class="op">=</span> <span class="num">0</span>
+
+    <span class="kw">while</span> <span class="cls">True</span>:
+        <span class="cmt"># Guard 1: max iterations ────────────────────────────────────</span>
+        <span class="kw">if</span> <span class="var">iterations</span> <span class="op">>=</span> <span class="cls">MAX_ITERATIONS</span>:
+            <span class="kw">raise</span> <span class="cls">AgentLoopError</span>(<span class="var">f</span><span class="str">"Max iterations ({MAX_ITERATIONS}) exceeded"</span>)
+        <span class="var">iterations</span> <span class="op">+=</span> <span class="num">1</span>
+
+        <span class="var">response</span> <span class="op">=</span> <span class="var">client</span>.<span class="var">messages</span>.<span class="fn">create</span>(
+            <span class="var">model</span><span class="op">=</span><span class="str">"claude-sonnet-4-6"</span>,
+            <span class="var">max_tokens</span><span class="op">=</span><span class="num">1024</span>,
+            <span class="var">tools</span><span class="op">=</span><span class="cls">TOOLS</span>,
+            <span class="var">messages</span><span class="op">=</span><span class="var">messages</span>,
+        )
+
+        <span class="cmt"># Guard 2: token budget ──────────────────────────────────────</span>
+        <span class="kw">if</span> <span class="var">response</span>.<span class="var">usage</span>.<span class="var">input_tokens</span> <span class="op">></span> <span class="cls">TOKEN_BUDGET</span>:
+            <span class="var">logger</span>.<span class="fn">warning</span>(<span class="str">"Approaching context limit: %d tokens"</span>, <span class="var">response</span>.<span class="var">usage</span>.<span class="var">input_tokens</span>)
+
+        <span class="kw">if</span> <span class="var">response</span>.<span class="var">stop_reason</span> <span class="op">==</span> <span class="str">"end_turn"</span>:
+            <span class="kw">return</span> <span class="var">response</span>.<span class="var">content</span>[<span class="num">0</span>].<span class="var">text</span>
+
+        <span class="cmt"># Execute all tool calls (Guards 3+4 inside execute_tool_safe) ─</span>
+        <span class="var">tool_results</span> <span class="op">=</span> [
+            <span class="fn">execute_tool_safe</span>(<span class="var">block</span>)
+            <span class="kw">for</span> <span class="var">block</span> <span class="kw">in</span> <span class="var">response</span>.<span class="var">content</span>
+            <span class="kw">if</span> <span class="var">block</span>.<span class="var">type</span> <span class="op">==</span> <span class="str">"tool_use"</span>
+        ]
+
+        <span class="var">messages</span>.<span class="fn">append</span>({<span class="str">"role"</span>: <span class="str">"assistant"</span>, <span class="str">"content"</span>: <span class="var">response</span>.<span class="var">content</span>})
+        <span class="var">messages</span>.<span class="fn">append</span>({<span class="str">"role"</span>: <span class="str">"user"</span>,      <span class="str">"content"</span>: <span class="var">tool_results</span>})</code></pre>
+
+  <div class="callout tip">
+    <div class="callout-title">Key insight: is_error keeps the model in the loop</div>
+    When you return <code>is_error: True</code>, the model receives the error message as context.
+    It can then retry with different arguments, try a fallback tool, or tell the user what failed —
+    all without your code doing anything special. Compare this to crashing the loop: the user sees
+    nothing and you have no trace of what happened.
+  </div>
+
+  <!-- Section 4: Why it works -->
+  <h2>Why Does This Work?</h2>
+  <p>
+    The model was trained to produce a special structured response when it determines it needs external
+    data. Instead of guessing, it outputs a <code>tool_use</code> block with the tool name and arguments.
+    <strong>Your code</strong> receives that, executes the function, and sends the result back as a
+    <code>tool_result</code> message. The model then continues reasoning with the real data.
+  </p>
+  <p>
+    The model never "runs" anything. It never touches your filesystem, network, or runtime directly.
+    It <em>requests</em>. You <em>execute</em>.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">The mental model</div>
+    <strong>The model is the brain. Your code is the hands.</strong><br/>
+    The model decides <em>what</em> to do and <em>when</em>. Your code decides <em>how</em> it actually happens.
+    This separation is what makes agents safe — you control every action that touches the real world.
+  </div>
+
+  <p>
+    This also explains why tool <em>descriptions</em> matter so much. The model reads the description to
+    decide whether to call the tool. A bad description = wrong tool choice. A great description = the
+    model uses the right tool at the right time. Writing tool descriptions is prompt engineering.
+  </p>
+
+  <!-- Section 5: React Analogy -->
+  <h2>The React Developer's Mental Model</h2>
+  <p>You already understand this pattern — you've been using it for years in React:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Agents</th>
+        <th>React</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Agent loop (perceive → think → act → observe → repeat)</td>
+        <td>Render cycle (props/state → render → DOM update → event → re-render)</td>
+      </tr>
+      <tr>
+        <td>Tool result returned to model</td>
+        <td><code>setState()</code> — new data triggers another think cycle</td>
+      </tr>
+      <tr>
+        <td>Tool definition (<code>name</code>, <code>description</code>, <code>input_schema</code>)</td>
+        <td>Component prop interface — a contract the model must satisfy to call the tool</td>
+      </tr>
+      <tr>
+        <td><code>stop_reason: "end_turn"</code></td>
+        <td>Component returning <code>null</code> — rendering is done, nothing more to produce</td>
+      </tr>
+      <tr>
+        <td>Multi-tool agent calling 3 tools in sequence</td>
+        <td>A component that fires 3 side effects in one render cycle before committing</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    The core idea is identical: <strong>data flows in, decisions happen, actions go out, new data
+    flows back in.</strong> You've been building reactive loops your whole career — the agent loop
+    is the same thing with an LLM as the decision engine.
+  </p>
+
+  <!-- Section C: Agent Architectures -->
+  <h2>Agent Architectures — The Landscape</h2>
+  <p>
+    The loop you built is called <strong>ReAct</strong>. It is one of three architectures that
+    dominate production AI systems. Knowing all three by name, and knowing when to reach for each
+    one, is expected knowledge at any AI engineering interview.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Pattern</th>
+        <th>How it works</th>
+        <th>Use when</th>
+        <th>Avoid when</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>ReAct</strong><br/><em style="font-size:0.8rem; color: var(--text-muted);">Reason + Act</em></td>
+        <td>Model alternates between reasoning (thinking about what to do) and acting (calling a
+            tool). Observes the result, then reasons again. Loop continues until
+            <code>end_turn</code>.</td>
+        <td>Most real-world tasks. Dynamic situations where the next step depends on what the
+            current tool returns.</td>
+        <td>Tasks where you already know all the steps upfront — Plan-and-Execute is more
+            efficient there.</td>
+      </tr>
+      <tr>
+        <td><strong>Plan-and-Execute</strong></td>
+        <td>First call: model produces a full ordered plan (list of steps). Subsequent calls:
+            execute each step in sequence, optionally revising the plan based on results.</td>
+        <td>Complex multi-step research tasks, code refactoring pipelines, document analysis
+            workflows — anywhere the steps are knowable upfront.</td>
+        <td>Dynamic tasks where step N depends entirely on the outcome of step N-1 and cannot be
+            anticipated.</td>
+      </tr>
+      <tr>
+        <td><strong>Reflection</strong></td>
+        <td>Agent produces output, then a second call (same or different model) critiques it and
+            suggests improvements. The original agent revises. Repeat until quality threshold is
+            met.</td>
+        <td>Writing, code generation, structured output extraction — any task where quality
+            matters more than speed and you can define a quality criterion.</td>
+        <td>Real-time response requirements. Tasks with no clear quality metric (reflection
+            without a rubric just adds noise).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <div class="callout-title">Which one is this lesson's agent?</div>
+    <strong>ReAct.</strong> It is the most common pattern in production and the pattern every AI
+    company starts with. It is simple enough to debug, general enough to handle most tasks, and
+    maps directly to the tool-calling API. Master ReAct first — then Plan-and-Execute and
+    Reflection are incremental additions on top of it.
+  </div>
+
+  <!-- Section D: Memory in Agents -->
+  <h2>Memory in Agents</h2>
+  <p>
+    Every API call to Claude is stateless. The model remembers nothing between calls unless
+    you put it in <code>messages[]</code>. "Memory" in agents is entirely your responsibility,
+    and there are four patterns with distinct trade-offs. This is a top-five interview topic.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Memory Type</th>
+        <th>Where data lives</th>
+        <th>Persists across sessions?</th>
+        <th>Best for</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>In-context</strong></td>
+        <td>The <code>messages[]</code> array passed with every API call</td>
+        <td>No — lost when your process ends</td>
+        <td>Single-session conversations. Everything you have built so far uses this.</td>
+      </tr>
+      <tr>
+        <td><strong>External / Vector DB</strong></td>
+        <td>Embeddings stored in a vector database (Pinecone, pgvector, Chroma)</td>
+        <td>Yes</td>
+        <td>Semantic recall — "remember what I told you last week." Requires embed-on-write and
+            retrieve-on-read. Used in RAG pipelines (Lesson 2).</td>
+      </tr>
+      <tr>
+        <td><strong>Structured DB</strong></td>
+        <td>Key facts extracted and stored in a relational or document database</td>
+        <td>Yes</td>
+        <td>User preferences, entity state, settings. Extract facts from conversation, inject
+            relevant ones into the system prompt at session start.</td>
+      </tr>
+      <tr>
+        <td><strong>Episodic</strong></td>
+        <td>Full session summaries stored and injected as prior context</td>
+        <td>Yes</td>
+        <td>Long-running assistants that need narrative continuity across sessions. Generate a
+            summary at session end, retrieve it at session start.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout tip">
+    <div class="callout-title">Practical guidance for your current skill level</div>
+    Start with in-context memory — it is what you have already built. Add a structured DB
+    (Postgres or SQLite) when you need to persist user preferences across sessions. Add a vector
+    DB when users need semantic recall ("find that thing I mentioned before"). Episodic summaries
+    are the highest-complexity option; reach for them only when context window cost becomes a real
+    concern on long-running assistants.
+  </div>
+
+  <!-- Section E: Interview Spotlight -->
+  <h2>Interview Spotlight</h2>
+  <p>
+    These are the six most common agent questions at AI engineering interviews. The answers below
+    are calibrated for a senior full-stack developer pivoting to AI — technically precise, grounded
+    in production realities, not textbook recitations.
+  </p>
+
+  <div class="callout info">
+    <div class="callout-title">How to use this section</div>
+    Read each answer once. Then close the page and try to answer from memory in your own words.
+    The goal is not memorization — it is building a mental model you can reason from in a conversation.
+  </div>
+
+  <h3>Q — "Explain the agent loop in simple terms."</h3>
+  <p>
+    <strong>Model answer:</strong> An agent is a perceive-decide-act-observe loop with an LLM as
+    the decision engine. The model receives input (perceive), decides whether to call a tool or
+    answer directly (decide), your code executes the tool (act), and the result goes back to the
+    model as new context (observe). This repeats until the model decides it has enough information
+    to give a final answer. Nothing runs in the model — it only requests. Your code executes.
+  </p>
+
+  <h3>Q — "How do you prevent an agent from running forever in production?"</h3>
+  <p>
+    <strong>Model answer:</strong> Three layers. First, a max iterations guard in the loop — if
+    <code>iterations &gt;= N</code>, raise an exception. Second, a token budget check on
+    <code>response.usage.input_tokens</code> each turn to catch runaway context growth before
+    hitting the API hard limit. Third, an HTTP-level timeout on the entire agent invocation in
+    your API handler or task queue — this catches cases where the model is slow rather than
+    looping. All three are necessary because each one catches a different failure mode.
+  </p>
+
+  <h3>Q — "What is the difference between sequential and parallel tool calls?"</h3>
+  <p>
+    <strong>Model answer:</strong> Sequential means the model issues one tool call per loop turn —
+    each result comes back before the next call is decided. Parallel means the model returns
+    multiple <code>tool_use</code> blocks in a single response. Your handler executes all of them
+    and returns all results in one message before the next model call. This halves the round-trips
+    for that turn. The requirement is that the tools have no data dependency — you cannot call tool
+    B with the output of tool A in the same parallel batch.
+  </p>
+
+  <h3>Q — "How would you handle a tool failure in an agent?"</h3>
+  <p>
+    <strong>Model answer:</strong> Catch the exception in the tool executor and return a
+    <code>tool_result</code> with <code>is_error: True</code> and the error message as content.
+    Never crash the loop. The model receives the error as context and can adapt — it might retry
+    with different arguments, try a fallback tool, or tell the user what failed. The key is that
+    the model must receive a <code>tool_result</code> for every <code>tool_use</code> it requested;
+    omitting one breaks the message history contract and typically causes a 400 error on the next
+    API call.
+  </p>
+
+  <h3>Q — "What is ReAct and why is it the dominant agent pattern?"</h3>
+  <p>
+    <strong>Model answer:</strong> ReAct stands for Reason + Act. The model alternates between
+    a reasoning step (thinking about what it needs) and an action step (calling a tool). This
+    alternation is why it handles complex multi-step tasks well — each new piece of information
+    can change the reasoning for what to do next. It is dominant because it maps directly to the
+    tool-calling API (no orchestration framework needed), it is straightforward to debug by
+    reading the message history, and it handles the majority of real-world agent tasks without
+    requiring a separate planning phase or reflection loop.
+  </p>
+
+  <h3>Q — "How does an agent maintain memory across sessions?"</h3>
+  <p>
+    <strong>Model answer:</strong> Never by relying on the model itself — there is no model memory
+    between API calls. For same-session recall, the <code>messages[]</code> array is sufficient.
+    For cross-session recall, you have two main options: a structured database (extract key facts
+    and inject them into the system prompt at session start — good for preferences and entity
+    state) or a vector database (embed past interactions and retrieve semantically similar ones —
+    good for "remember what I said about X"). For narrative continuity on long-running assistants,
+    generate a session summary at the end and inject it at the start of the next session.
+  </p>
+
+  <!-- Section 6: Quiz -->
+  <div class="quiz">
+    <h3>Check your understanding</h3>
+
+    <!-- Q1 -->
+    <div class="quiz-question" id="q1">
+      <p>In the agent loop, who actually executes the tool code when the model decides to call <code>get_weather(city='London')</code>?</p>
+      <div class="quiz-options">
+        <label class="quiz-option">
+          <input type="radio" name="q1" value="a" /> The model runs it
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q1" value="b" /> Your Python code runs it
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q1" value="c" /> The API server runs it
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q1" value="d" /> The OS runs it
+        </label>
+      </div>
+      <button class="quiz-check-btn" onclick="checkQ('q1','b','The model outputs a structured request. Your code executes it and returns the result. The model never has direct access to your filesystem, network, or runtime.')">Check answer</button>
+      <div class="quiz-feedback" id="q1-feedback"></div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="quiz-question" id="q2" style="margin-top:1.5rem;">
+      <p>What stops an agent loop from running forever?</p>
+      <div class="quiz-options">
+        <label class="quiz-option">
+          <input type="radio" name="q2" value="a" /> The model gets tired
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q2" value="b" /> stop_reason equals end_turn
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q2" value="c" /> A timeout after 30 seconds
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q2" value="d" /> The tool returns None
+        </label>
+      </div>
+      <button class="quiz-check-btn" onclick="checkQ('q2','b','The model signals it\'s done by returning stop_reason: \"end_turn\" instead of \"tool_use\". Your loop checks this and exits. In production, add a max_iterations guard too.')">Check answer</button>
+      <div class="quiz-feedback" id="q2-feedback"></div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="quiz-question" id="q3" style="margin-top:1.5rem;">
+      <p>You want the agent to search your company's internal docs. What do you need to define?</p>
+      <div class="quiz-options">
+        <label class="quiz-option">
+          <input type="radio" name="q3" value="a" /> A new model endpoint
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q3" value="b" /> A tool with name, description, input_schema
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q3" value="c" /> A new system prompt variable
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q3" value="d" /> A webhook URL
+        </label>
+      </div>
+      <button class="quiz-check-btn" onclick="checkQ('q3','b','The model decides whether to call a tool based on the description. Write the description like a prompt — it IS a prompt. Then implement the function to actually query your docs.')">Check answer</button>
+      <div class="quiz-feedback" id="q3-feedback"></div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="quiz-question" id="q4" style="margin-top:1.5rem;">
+      <p>What do you send back to the model when a tool raises an exception?</p>
+      <div class="quiz-options">
+        <label class="quiz-option">
+          <input type="radio" name="q4" value="a" /> Nothing — skip the error
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q4" value="b" /> A tool_result with is_error: True
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q4" value="c" /> A new user message explaining it
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q4" value="d" /> Restart the agent loop entirely
+        </label>
+      </div>
+      <button class="quiz-check-btn" onclick="checkQ('q4','b','The model expects a tool_result for every tool_use it requested. Send is_error: True and the error message — the model will adapt its strategy, such as retrying with different arguments or telling the user what failed.')">Check answer</button>
+      <div class="quiz-feedback" id="q4-feedback"></div>
+    </div>
+
+    <!-- Q5 -->
+    <div class="quiz-question" id="q5" style="margin-top:1.5rem;">
+      <p>What is the maximum number of tools Claude can call in a single response turn?</p>
+      <div class="quiz-options">
+        <label class="quiz-option">
+          <input type="radio" name="q5" value="a" /> Exactly one tool per turn
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q5" value="b" /> Up to the total tool count you defined
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q5" value="c" /> Exactly two tools per turn
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q5" value="d" /> No limit — unlimited parallel calls
+        </label>
+      </div>
+      <button class="quiz-check-btn" onclick="checkQ('q5','b','Claude can call multiple tools in parallel in a single response — you\'ll see multiple tool_use blocks in response.content. Execute all of them before sending the next message. The limit is bounded by how many tools you defined, not a fixed cap.')">Check answer</button>
+      <div class="quiz-feedback" id="q5-feedback"></div>
+    </div>
+
+    <!-- Q6 -->
+    <div class="quiz-question" id="q6" style="margin-top:1.5rem;">
+      <p>In the ReAct pattern, what does the "Re" stand for?</p>
+      <div class="quiz-options">
+        <label class="quiz-option">
+          <input type="radio" name="q6" value="a" /> Respond
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q6" value="b" /> Reason
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q6" value="c" /> Retry
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q6" value="d" /> Return
+        </label>
+      </div>
+      <button class="quiz-check-btn" onclick="checkQ('q6','b','ReAct = Reason + Act. The model reasons about what to do next, then acts by calling a tool or answering. This alternation is why it handles complex multi-step tasks — each tool result can change the reasoning for the next step.')">Check answer</button>
+      <div class="quiz-feedback" id="q6-feedback"></div>
+    </div>
+
+    <!-- Q7 -->
+    <div class="quiz-question" id="q7" style="margin-top:1.5rem;">
+      <p>Your agent answers "What's the weather in Paris AND Rome?" — what does an optimal model response look like?</p>
+      <div class="quiz-options">
+        <label class="quiz-option">
+          <input type="radio" name="q7" value="a" /> Two separate loop turns, one city each
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q7" value="b" /> One response containing two tool_use blocks
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q7" value="c" /> One call to a batch weather endpoint
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q7" value="d" /> Two concurrent Anthropic API requests
+        </label>
+      </div>
+      <button class="quiz-check-btn" onclick="checkQ('q7','b','An efficient model batches independent tool calls into one response, halving round-trips. Your handler iterates all tool_use blocks, executes all of them, and returns all results in one message. This is parallel tool calling — covered in the Parallel Tool Calls section.')">Check answer</button>
+      <div class="quiz-feedback" id="q7-feedback"></div>
+    </div>
+
+    <!-- Q8 -->
+    <div class="quiz-question" id="q8" style="margin-top:1.5rem;">
+      <p>Which memory type would you use to remember a user's coding language preference across sessions?</p>
+      <div class="quiz-options">
+        <label class="quiz-option">
+          <input type="radio" name="q8" value="a" /> In-context messages array
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q8" value="b" /> Structured DB with extracted facts
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q8" value="c" /> Episodic session summary storage
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q8" value="d" /> Fine-tune the model on the preference
+        </label>
+      </div>
+      <button class="quiz-check-btn" onclick="checkQ('q8','b','Preferences are structured facts — extract them during the conversation and store in a DB. At session start, inject relevant preferences into the system prompt. In-context memory only lasts one session. Fine-tuning is expensive and inflexible for per-user state.')">Check answer</button>
+      <div class="quiz-feedback" id="q8-feedback"></div>
+    </div>
+
+    <!-- Q9 -->
+    <div class="quiz-question" id="q9" style="margin-top:1.5rem;">
+      <p>You define a tool with description: "Gets data." The agent never calls it. What's most likely wrong?</p>
+      <div class="quiz-options">
+        <label class="quiz-option">
+          <input type="radio" name="q9" value="a" /> The JSON schema has a syntax error
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q9" value="b" /> Description too vague — model doesn't know when to use it
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q9" value="c" /> A required field is missing from input_schema
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q9" value="d" /> The tool name conflicts with a reserved keyword
+        </label>
+      </div>
+      <button class="quiz-check-btn" onclick="checkQ('q9','b','The model decides whether to use a tool based entirely on the description — it is a prompt. \"Gets data.\" gives no signal about when to call it. Write descriptions like instructions: \"Search the company knowledge base for documentation. Use when the user asks a how-to or factual question about our product.\"')">Check answer</button>
+      <div class="quiz-feedback" id="q9-feedback"></div>
+    </div>
+
+    <!-- Q10 -->
+    <div class="quiz-question" id="q10" style="margin-top:1.5rem;">
+      <p>What is the Plan-and-Execute pattern best suited for?</p>
+      <div class="quiz-options">
+        <label class="quiz-option">
+          <input type="radio" name="q10" value="a" /> Simple Q&amp;A requiring one tool call
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q10" value="b" /> Complex multi-step tasks with known structure
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q10" value="c" /> Real-time streaming chat responses
+        </label>
+        <label class="quiz-option">
+          <input type="radio" name="q10" value="d" /> Single-turn text classification jobs
+        </label>
+      </div>
+      <button class="quiz-check-btn" onclick="checkQ('q10','b','Plan-and-Execute generates a full execution plan first, then runs each step. This works well when you can enumerate the steps upfront — research pipelines, multi-document analysis, code refactoring workflows. For dynamic tasks where each step depends on the previous result, ReAct is better.')">Check answer</button>
+      <div class="quiz-feedback" id="q10-feedback"></div>
+    </div>
+  </div>
+
+  <!-- Section 7: Exercise -->
+  <h2>Your Exercise</h2>
+
+  <div class="callout tip">
+    <div class="callout-title">Try this</div>
+    <p>Add a 4th tool to the agent above:</p>
+    <pre style="margin: 0.75rem 0 0;"><code><span class="kw">def</span> <span class="fn">get_stock_price</span>(<span class="var">ticker</span>: <span class="cls">str</span>) <span class="op">-></span> <span class="cls">str</span>:
+    <span class="cmt"># Return a fake price for now</span>
+    <span class="var">prices</span> <span class="op">=</span> {<span class="str">"AAPL"</span>: <span class="num">182.50</span>, <span class="str">"GOOGL"</span>: <span class="num">175.20</span>, <span class="str">"MSFT"</span>: <span class="num">415.00</span>}
+    <span class="var">price</span> <span class="op">=</span> <span class="var">prices</span>.<span class="fn">get</span>(<span class="var">ticker</span>.<span class="fn">upper</span>(), <span class="num">100.0</span>)
+    <span class="kw">return</span> <span class="var">json</span>.<span class="fn">dumps</span>({<span class="str">"ticker"</span>: <span class="var">ticker</span>, <span class="str">"price_usd"</span>: <span class="var">price</span>})</code></pre>
+    <p style="margin-top: 0.75rem;">Then ask the agent:</p>
+    <p><em>"What's the current price of Apple stock, and how many shares could I buy with $1000?"</em></p>
+    <p>
+      Watch it chain <strong>two tool calls</strong> — first <code>get_stock_price</code>,
+      then <code>calculate</code> — before producing the final answer. That's an agent doing real work.
+    </p>
+  </div>
+
+  <!-- Section 8: Primary Resource -->
+  <h2>Go Deeper</h2>
+  <p>
+    <strong>Primary source:</strong>
+    <a href="https://docs.anthropic.com/en/docs/build-with-claude/tool-use" target="_blank">
+      Anthropic Tool Use Guide
+    </a> — the official reference covering all edge cases: parallel tool calls, error handling,
+    forcing specific tools, and multi-turn patterns. Read this after completing the exercise.
+  </p>
+  <p>
+    <strong>Also worth exploring:</strong>
+    <a href="https://github.com/anthropics/anthropic-cookbook" target="_blank">Anthropic Cookbook</a>
+    — real-world agent recipes including web search, code execution, and computer use.
+  </p>
+
+  <!-- Section 9: Ask Your Teacher -->
+  <div class="ask-teacher">
+    <strong>Questions? Ask your teacher.</strong><br/>
+    If anything in this lesson was unclear — the loop, why tool descriptions matter, how to wire up
+    a real search API, or what to build next — ask in the Claude Code session.
+    Your teacher has full context on where you are and where you're going.
+  </div>
+
+  <!-- Section 10: Roadmap -->
+  <h2>Your Learning Roadmap</h2>
+  <div class="roadmap">
+
+    <div class="roadmap-phase phase-active">
+      <div class="roadmap-phase-header">
+        <div class="phase-num">1</div>
+        Phase 1 — AI Builder <span style="margin-left:auto; font-size:0.75rem; color: var(--accent);">← You are here</span>
+      </div>
+      <div class="roadmap-phase-body">
+        <ul>
+          <li>✓ <strong>Lesson 1: AI Agents &amp; Tool Use</strong> — this lesson</li>
+          <li>Lesson 2: RAG Pipelines — Build a real document search</li>
+          <li>Lesson 3: Production AI Patterns — Streaming, retries, cost control</li>
+          <li>Lesson 4: Multi-modal AI — Vision + text</li>
+          <li>Lesson 5: AI Evals in Production</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="roadmap-phase phase-upcoming">
+      <div class="roadmap-phase-header">
+        <div class="phase-num">2</div>
+        Phase 2 — Model Whisperer
+      </div>
+      <div class="roadmap-phase-body">
+        Transformers, attention mechanism, modern architectures (GPT, LLaMA, Mistral)
+      </div>
+    </div>
+
+    <div class="roadmap-phase phase-upcoming">
+      <div class="roadmap-phase-header">
+        <div class="phase-num">3</div>
+        Phase 3 — Model Modifier
+      </div>
+      <div class="roadmap-phase-body">
+        Fine-tuning, LoRA / PEFT, instruction tuning, RLHF
+      </div>
+    </div>
+
+    <div class="roadmap-phase phase-upcoming">
+      <div class="roadmap-phase-header">
+        <div class="phase-num">4</div>
+        Phase 4 — Production AI
+      </div>
+      <div class="roadmap-phase-body">
+        vLLM model serving, Docker + CUDA, cloud deployment, monitoring at scale
+      </div>
+    </div>
+
+    <div class="roadmap-phase phase-upcoming">
+      <div class="roadmap-phase-header">
+        <div class="phase-num">5</div>
+        Phase 5 — Expert
+      </div>
+      <div class="roadmap-phase-body">
+        Research paper literacy, multi-agent systems, AI safety, staying current
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Navigation -->
+  <nav class="lesson-nav">
+    <span style="color: var(--text-muted); font-size: 0.8rem;">← No previous lesson</span>
+    <a href="0002-rag-pipelines.html">Next: RAG Pipelines →</a>
+  </nav>
+
+</div>
+
+<script>
+function checkQ(qId, correct, feedback) {
+  const selected = document.querySelector(`input[name="${qId}"]:checked`);
+  const feedbackEl = document.getElementById(`${qId}-feedback`);
+  const options = document.querySelectorAll(`#${qId} .quiz-option`);
+
+  if (!selected) {
+    feedbackEl.textContent = 'Pick an answer first.';
+    feedbackEl.className = 'quiz-feedback show wrong';
+    return;
+  }
+
+  // Reset styles
+  options.forEach(opt => {
+    opt.classList.remove('correct', 'wrong');
+  });
+
+  const isCorrect = selected.value === correct;
+
+  // Highlight selected
+  selected.closest('.quiz-option').classList.add(isCorrect ? 'correct' : 'wrong');
+
+  // If wrong, also highlight the correct one
+  if (!isCorrect) {
+    const correctInput = document.querySelector(`input[name="${qId}"][value="${correct}"]`);
+    if (correctInput) correctInput.closest('.quiz-option').classList.add('correct');
+  }
+
+  feedbackEl.textContent = (isCorrect ? '✓ Correct. ' : '✗ Not quite. ') + feedback;
+  feedbackEl.className = `quiz-feedback show ${isCorrect ? 'correct' : 'wrong'}`;
+}
+</script>
+</body>
+</html>
