@@ -65,6 +65,8 @@ The `Learn/` folder is where your practice code lives. After each lesson, write 
 
 **[→ Open the Lesson Index](lessons/README.md)**
 
+> For the best experience, open [`index.html`](index.html) in your browser — all lesson links will open as rendered pages, not code.
+
 ---
 
 ## Foundations Already in Place

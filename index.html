@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Future Proof — AI Engineering</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <style>
+    body { display: flex; align-items: flex-start; justify-content: center; min-height: 100vh; }
+
+    .book-cover {
+      max-width: 700px;
+      width: 100%;
+      padding: 5rem 1rem 4rem;
+    }
+
+    .book-eyebrow {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    .book-title {
+      font-size: clamp(2.8rem, 8vw, 4.5rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .book-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      margin-bottom: 2.5rem;
+      font-weight: 400;
+    }
+
+    .book-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 2.5rem 0;
+    }
+
+    .book-quote {
+      border-left: 3px solid var(--accent);
+      padding: 0.75rem 1.25rem;
+      margin: 0 0 2.5rem;
+      font-size: 1.05rem;
+      font-style: italic;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+    .book-quote strong { color: var(--text); font-style: normal; }
+
+    .progress-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin: 0 0 2.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.8;
+      color: var(--text-muted);
+    }
+    .progress-block .done  { color: var(--green); }
+    .progress-block .here  { color: var(--accent); font-weight: 600; }
+    .progress-block .lock  { color: var(--border); }
+    .progress-block .phase { color: var(--text); font-weight: 600; }
+
+    .phase-table { margin-bottom: 2.5rem; }
+    .phase-table tr.active-phase td { color: var(--text); }
+    .phase-table tr.active-phase td:first-child { font-weight: 700; }
+    .phase-table tr.active-phase { background: rgba(124,106,247,0.07); }
+    .phase-table td:last-child { color: var(--text-muted); font-size: 0.85rem; }
+
+    .cta-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 3rem; }
+
+    .cta-btn {
+      display: inline-block;
+      padding: 0.8rem 2rem;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: opacity 0.15s;
+      font-family: var(--font-sans);
+    }
+    .cta-btn:hover { opacity: 0.85; text-decoration: none; }
+
+    .cta-hint {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .book-footer {
+      border-top: 1px solid var(--border);
+      padding-top: 1.5rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .phase-locked { opacity: 0.4; }
+  </style>
+</head>
+<body>
+<div class="book-cover">
+
+  <div class="book-eyebrow">AI Engineering Curriculum</div>
+  <h1 class="book-title">Future Proof</h1>
+  <p class="book-subtitle">AI Engineering for the Senior Developer</p>
+
+  <blockquote class="book-quote">
+    You have 12 years of experience building software.<br/>
+    This curriculum turns that into your edge —
+    <strong>not a liability.</strong><br/>
+    The developer who can build <em>and</em> direct AI is rarer than the AI itself.
+  </blockquote>
+
+  <hr class="book-divider" />
+
+  <h2 style="margin-top:0; margin-bottom: 1rem;">Where You Are</h2>
+
+  <div class="progress-block">
+<span class="phase">Phase 1 — AI Builder</span>
+  <span class="done">✓</span>  Lesson 1: AI Agents &amp; Tool Use         <span class="done">[complete]</span>
+  <span class="here">→</span>  Lesson 2: RAG Pipelines                <span class="here">[next up]</span>
+  ·  Lesson 3: Production AI Patterns       <span class="lock">[upcoming]</span>
+  ·  Lesson 4: Multi-modal AI               <span class="lock">[upcoming]</span>
+  ·  Lesson 5: AI Evals in Production       <span class="lock">[upcoming]</span>
+
+<span class="phase phase-locked">Phase 2 — Model Whisperer                   [locked]</span>
+<span class="phase phase-locked">Phase 3 — Model Modifier                    [locked]</span>
+<span class="phase phase-locked">Phase 4 — Production AI                     [locked]</span>
+<span class="phase phase-locked">Phase 5 — Expert                            [locked]</span>
+  </div>
+
+  <h2 style="margin-bottom: 1rem;">The Five Phases</h2>
+
+  <table class="phase-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Phase</th>
+        <th>Focus</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="active-phase">
+        <td><strong>1</strong></td>
+        <td><strong>AI Builder</strong></td>
+        <td>Agents, RAG, production patterns, multi-modal</td>
+        <td style="color: var(--accent); font-weight: 600;">In Progress</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Model Whisperer</td>
+        <td>Transformers, attention, how models work</td>
+        <td>Upcoming</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Model Modifier</td>
+        <td>Fine-tuning, LoRA, RLHF</td>
+        <td>Upcoming</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Production AI</td>
+        <td>vLLM, model serving, MLOps, deployment</td>
+        <td>Upcoming</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Expert</td>
+        <td>Research literacy, multi-agent, staying current</td>
+        <td>Upcoming</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="cta-row">
+    <a href="lessons/index.html" class="cta-btn">Enter the Curriculum →</a>
+    <span class="cta-hint">Bookmark this page — it tracks your progress.</span>
+  </div>
+
+  <hr class="book-divider" />
+
+  <h2 style="margin-bottom: 0.75rem;">How This Works</h2>
+  <p style="color: var(--text-muted); margin-bottom: 0;">
+    Each lesson is a self-contained HTML page — read it, run the code, answer the quiz.
+    The <code>Learn/</code> folder is where your practice code lives. After each lesson, write your version there.
+    The <strong>Interview Spotlight</strong> in every lesson is prep content you should know cold.
+  </p>
+
+  <hr class="book-divider" />
+
+  <div class="book-footer">
+    <span>Prompt Engineering foundation: 6 modules complete</span>
+    <span>Built with Claude Code</span>
+  </div>
+
+</div>
+</body>
+</html>
